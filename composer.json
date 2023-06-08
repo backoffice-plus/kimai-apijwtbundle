@@ -1,0 +1,28 @@
+{
+    "name": "boplus/api-jwt-bundle",
+    "description": "add jwt authorization",
+    "homepage": "https://www.kimai.org/",
+    "type": "kimai-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "extra": {
+        "kimai": {
+            "require": 20000,
+            "name": "ApiJwtBundle"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "KimaiPlugin\\ApiJwtBundle\\": ""
+        }
+    },
+    "require-dev": {
+        "kimai/kimai": "^2.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true,
+            "symfony/flex": true
+        }
+    }
+}
