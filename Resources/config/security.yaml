@@ -1,10 +1,19 @@
-security:
-    firewalls:
-        apiJwtBundle:
-            request_matcher: KimaiPlugin\ApiJwtBundle\Authenticator\ApiRequestMatcher
-            user_checker: App\Security\UserChecker
-            custom_authenticators:
-                - KimaiPlugin\ApiJwtBundle\Authenticator\TokenAuthenticatorBearer
+#security:
+
+##
+## not easy possible to overwrite security config
+##
+
+#    firewalls:
+#        apiJwtBundle:
+#          request_matcher: KimaiPlugin\ApiJwtBundle\Authenticator\AuthorizationHeaderRequestMatcher
+#          user_checker: App\Security\UserChecker
+#          custom_authenticators:
+#            - KimaiPlugin\ApiJwtBundle\Authenticator\JwtAuthenticator
+
+
+
+
 
 #        ##copy from main security.yaml
 #        dev:

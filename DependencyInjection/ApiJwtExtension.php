@@ -31,12 +31,9 @@ class ApiJwtExtension extends AbstractPluginExtension implements PrependExtensio
     {
         $yamlParser = new Parser();
 
-        /**
-         * not easy possible to overwrite security config
-         */
         //security
 //        if (false === $data = file_get_contents(__DIR__ . '/../Resources/config/security.yaml')) {
-//            throw new \Exception('Could not read nelmio_cors configuration');
+//            throw new \Exception('Could not read security configuration');
 //        }
 //        $container->prependExtensionConfig('security', $yamlParser->parse($data)['security']);
 

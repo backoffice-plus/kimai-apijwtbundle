@@ -14,7 +14,7 @@ use App\API\Authentication\TokenAuthenticator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 
-final class ApiRequestMatcher implements RequestMatcherInterface
+final class AuthorizationHeaderRequestMatcher implements RequestMatcherInterface
 {
     public function matches(Request $request): bool
     {
