@@ -46,9 +46,9 @@ final class JwtAuthenticator extends AbstractAuthenticator
         $userLoader = function ($email) use ($jwt) {
 
             $attributes = [
-                "Email"     => $email,
-                "FirstName" => $jwt['given_name'] ?? $email,
-                "LastName"  => $jwt['family_name'] ?? '***',
+                "Email"     => [$email],
+                "FirstName" => [$jwt['given_name'] ?? $email],
+                "LastName"  => [$jwt['family_name'] ?? '***'],
             ];
             $loginAttributes = new SamlLoginAttributes();
             $loginAttributes->setAttributes($attributes);
