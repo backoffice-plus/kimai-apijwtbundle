@@ -1,3 +1,15 @@
+# Kamai ApiJWTBundle
+
+## Installation
+
+copy all files to ApiJWTBundle in var/plugins/
+```
+var/plugins/
+├── ApiJWTBundle
+|   └ ... copy all ...
+
+```
+
 add this to the firewalls part at security.yaml
 ```yaml
  security:
