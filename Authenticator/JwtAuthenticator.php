@@ -52,7 +52,7 @@ final class JwtAuthenticator extends AbstractAuthenticator
             ];
             $loginAttributes = new SamlLoginAttributes();
             $loginAttributes->setAttributes($attributes);
-            $loginAttributes->setUserIdentifier($email);
+            $loginAttributes->setUserIdentifier($jwt['preferred_username']);
 
             try {
                 $user = $this->samlProvider->findUser($loginAttributes);
