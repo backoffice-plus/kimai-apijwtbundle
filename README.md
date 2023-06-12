@@ -22,3 +22,12 @@ add this to the firewalls part at security.yaml
           - KimaiPlugin\ApiJwtBundle\Authenticator\JwtAuthenticator
       #...
 ```
+
+create api_jwt.yaml in config/packages and set public key
+```yaml
+api_jwt:
+  public_key: '%env(KIMAI_APIJWT_PUBLIC_KEY)%'
+```
+```dotenv
+KIMAI_APIJWT_PUBLIC_KEY=
+```

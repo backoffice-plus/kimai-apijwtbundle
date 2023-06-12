@@ -4,12 +4,14 @@ namespace KimaiPlugin\ApiJwtBundle\Authenticator;
 
 use App\Saml\SamlLoginAttributes;
 use App\Saml\SamlProvider;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use KimaiPlugin\ApiJwtBundle\Configuration\ApiJwtConfiguration;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
@@ -20,6 +22,7 @@ final class JwtAuthenticator extends AbstractAuthenticator
 {
     public function __construct(
         private SamlProvider $samlProvider,
+        private ApiJwtConfiguration $config,
     ) {
     }
 
@@ -33,26 +36,25 @@ final class JwtAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        /**
-         * :TODO add jwt validation!!
-         */
-        $jwt = $this->getJwtDecoded($request);
-        $email = $jwt['email'];
+        $jwtToken = $this->getJwtToken($request);
 
-        if (!$email) {
-            throw new BadCredentialsException('Invalid JWT Token');
-        }
+        $keyParts = str_split($this->config->getPublicKey(), 64);
+        array_unshift($keyParts, '-----BEGIN PUBLIC KEY-----');
+        $keyParts[] = '-----END PUBLIC KEY-----';
+        $keyfile = implode(PHP_EOL, $keyParts);
 
-        $userLoader = function ($email) use ($jwt) {
+        $token = JWT::decode($jwtToken, new Key($keyfile, 'RS256'));
 
+        $userLoader = function ($email) use ($token) {
             $attributes = [
-                "Email"     => [$email],
-                "FirstName" => [$jwt['given_name'] ?? $email],
-                "LastName"  => [$jwt['family_name'] ?? '***'],
+                'Email' => [$email],
+                'FirstName' => [$token->given_name ?? ''],
+                'LastName' => [$token->family_name ?? ''],
             ];
+
             $loginAttributes = new SamlLoginAttributes();
             $loginAttributes->setAttributes($attributes);
-            $loginAttributes->setUserIdentifier($jwt['preferred_username']);
+            $loginAttributes->setUserIdentifier($token->preferred_username);
 
             try {
                 $user = $this->samlProvider->findUser($loginAttributes);
@@ -63,19 +65,17 @@ final class JwtAuthenticator extends AbstractAuthenticator
             return $user;
         };
 
-        return new SelfValidatingPassport(new UserBadge($email, $userLoader));
+        return new SelfValidatingPassport(new UserBadge($token->email, $userLoader));
     }
 
-    private function getJwtDecoded(Request $request): array|false
+    private function getJwtToken(Request $request): string
     {
         $auth = $request->headers->get('Authorization');
         if (!preg_match('/Bearer (.*)/', $auth, $found)) {
             throw new CustomUserMessageAuthenticationException('Invalid Bearer');
         }
 
-        $bearer = $found[1];
-
-        return json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $bearer)[1]))), true);
+        return $found[1];
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response

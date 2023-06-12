@@ -16,6 +16,9 @@
             "KimaiPlugin\\ApiJwtBundle\\": ""
         }
     },
+    "require": {
+        "firebase/php-jwt": "^6.5"
+    },
     "require-dev": {
         "kimai/kimai": "^2.0"
     },
