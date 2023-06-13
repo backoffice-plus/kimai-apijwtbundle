@@ -6,7 +6,6 @@ use App\Saml\SamlLoginAttributes;
 use App\Saml\SamlProvider;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use KimaiPlugin\ApiJwtBundle\Configuration\ApiJwtConfiguration;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +21,7 @@ final class JwtAuthenticator extends AbstractAuthenticator
 {
     public function __construct(
         private SamlProvider $samlProvider,
-        private ApiJwtConfiguration $config,
+        private string $apijwtPublicKey,
     ) {
     }
 
@@ -38,7 +37,7 @@ final class JwtAuthenticator extends AbstractAuthenticator
     {
         $jwtToken = $this->getJwtToken($request);
 
-        $keyParts = str_split($this->config->getPublicKey(), 64);
+        $keyParts = str_split($this->apijwtPublicKey, 64);
         array_unshift($keyParts, '-----BEGIN PUBLIC KEY-----');
         $keyParts[] = '-----END PUBLIC KEY-----';
         $keyfile = implode(PHP_EOL, $keyParts);
@@ -59,13 +58,41 @@ final class JwtAuthenticator extends AbstractAuthenticator
             try {
                 $user = $this->samlProvider->findUser($loginAttributes);
             } catch (\Exception $e) {
-                throw new \Exception("userLoader.samlProvider.Exception".$e->getMessage());
+                throw new \Exception('userLoader.samlProvider.Exception' . $e->getMessage());
             }
 
             return $user;
         };
 
         return new SelfValidatingPassport(new UserBadge($token->email, $userLoader));
+    }
+
+    public function is_jwt_valid($jwt, $secret = 'secret') {
+        // split the jwt
+        $tokenParts = explode('.', $jwt);
+        $header = base64_decode($tokenParts[0]);
+        $payload = base64_decode($tokenParts[1]);
+        $signature_provided = $tokenParts[2];
+
+        // check the expiration time - note this will cause an error if there is no 'exp' claim in the jwt
+        $expiration = json_decode($payload)->exp;
+        $is_token_expired = ($expiration - time()) < 0;
+
+        // build a signature based on the header and payload using the secret
+        $base64_url_header = base64url_encode($header);
+        $base64_url_payload = base64url_encode($payload);
+        $signature = hash_hmac('SHA256', $base64_url_header . '.' . $base64_url_payload, $secret);
+        $base64_url_signature = base64url_encode($signature);
+
+        // verify it matches the signature provided in the jwt
+        $is_signature_valid = ($base64_url_signature === $signature_provided);
+
+        throw new \Exception(json_encode([$signature, $signature_provided]));
+        if ($is_token_expired || !$is_signature_valid) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private function getJwtToken(Request $request): string
@@ -78,6 +105,18 @@ final class JwtAuthenticator extends AbstractAuthenticator
         return $found[1];
     }
 
+    private function getJwtDecoded(Request $request): array|false
+    {
+        $auth = $request->headers->get('Authorization');
+        if (!preg_match('/Bearer (.*)/', $auth, $found)) {
+            throw new CustomUserMessageAuthenticationException('Invalid Bearer');
+        }
+
+        $bearer = $this->getJwtToken($request);
+
+        return json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $bearer)[1]))), true);
+    }
+
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         return null;
@@ -86,9 +125,26 @@ final class JwtAuthenticator extends AbstractAuthenticator
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $data = [
-            'message' => 'onAuthenticationFailure . '.($exception instanceof CustomUserMessageAuthenticationException ? $exception->getMessage() : 'Invalid credentials'),
+            'message' => 'onAuthenticationFailure . ' . ($exception instanceof CustomUserMessageAuthenticationException ? $exception->getMessage() : 'Invalid credentials'),
         ];
 
         return new JsonResponse($data, Response::HTTP_FORBIDDEN);
     }
+}
+
+function base64url_encode($data)
+{
+    // First of all you should encode $data to Base64 string
+    $b64 = base64_encode($data);
+
+    // Make sure you get a valid result, otherwise, return FALSE, as the base64_encode() function do
+    if ($b64 === false) {
+        return false;
+    }
+
+    // Convert Base64 to Base64URL by replacing “+” with “-” and “/” with “_”
+    $url = strtr($b64, '+/', '-_');
+
+    // Remove padding character from the end of line and return the Base64URL result
+    return rtrim($url, '=');
 }
