@@ -13,21 +13,17 @@ var/plugins/
 add this to the firewalls part at security.yaml
 ```yaml
  security:
-    firewalls:
-      #...
-      apiJwtBundle:
-        request_matcher: KimaiPlugin\ApiJwtBundle\Authenticator\AuthorizationHeaderRequestMatcher
-        user_checker: App\Security\UserChecker
-        custom_authenticators:
-          - KimaiPlugin\ApiJwtBundle\Authenticator\JwtAuthenticator
-      #...
+   firewalls:
+     #...
+     apiJwtBundle:
+       request_matcher: KimaiPlugin\ApiJwtBundle\Authenticator\AuthorizationHeaderRequestMatcher
+       user_checker: App\Security\UserChecker
+       custom_authenticators:
+         - KimaiPlugin\ApiJwtBundle\Authenticator\JwtAuthenticator
+     #...
 ```
 
-create api_jwt.yaml in config/packages and set public key
-```yaml
-api_jwt:
-  public_key: '%env(KIMAI_APIJWT_PUBLIC_KEY)%'
-```
+add this to the .env file
 ```dotenv
 KIMAI_APIJWT_PUBLIC_KEY=
 ```

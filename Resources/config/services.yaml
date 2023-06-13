@@ -1,10 +1,20 @@
+# config/services.yaml
+parameters:
+    apijwt.public_key: '%env(KIMAI_APIJWT_PUBLIC_KEY)%'
+
 services:
     _defaults:
         autowire: true
         autoconfigure: true
         public: false
+        bind:
+            $apijwtPublicKey: '%apijwt.public_key%'
 
     KimaiPlugin\ApiJwtBundle\:
         resource: '../../*'
         exclude:
             - '../../Resources/'
+
+#    KimaiPlugin\ApiJwtBundle\Authenticator\CreateJwtUserProvider:
+#        arguments:
+#            - '@security.user_providers'

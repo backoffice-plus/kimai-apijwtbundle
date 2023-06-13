@@ -14,14 +14,14 @@ class Configuration implements ConfigurationInterface
         /** @var ArrayNodeDefinition $rootNode */
         $rootNode = $treeBuilder->getRootNode();
 
-        $rootNode
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode('public_key')
-                    ->defaultValue('')
-                ->end()
-            ->end()
-        ->end();
+//        $rootNode
+//            ->addDefaultsIfNotSet()
+//            ->children()
+//                ->scalarNode('public_key')
+//                    ->defaultValue('')
+//                ->end()
+//            ->end()
+//        ->end();
 
         return $treeBuilder;
     }
